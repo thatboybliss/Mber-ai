@@ -1,0 +1,190 @@
+<main class="h-screen w-full flex bg-[var(--color-warm-bg)] overflow-hidden relative">
+  <!-- Chat Area -->
+  <section class="flex-1 flex flex-col items-center justify-between p-4 sm:p-8 h-full max-w-4xl mx-auto">
+    <!-- Header -->
+    <header class="w-full flex justify-between items-center mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-[var(--color-olive)] flex items-center justify-center text-white shadow">
+          <mat-icon>psychology</mat-icon>
+        </div>
+        <div>
+          <h1 class="text-2xl font-serif text-[var(--color-ink)] leading-none" style="font-family: var(--font-serif); font-weight: 700;">Claude</h1>
+          <p class="text-sm text-[var(--color-muted)]">Your AI Best Friend</p>
+        </div>
+      </div>
+      <button class="md:hidden btn-olive !p-2 !rounded-full" (click)="toggleSidebar()">
+        <mat-icon>tune</mat-icon>
+      </button>
+    </header>
+
+    <!-- Chat Messages -->
+    <div class="flex-1 w-full overflow-y-auto flex flex-col gap-6 py-4 px-2 no-scrollbar" style="scroll-behavior: smooth;">
+      @for (msg of chatService.messages(); track $index) {
+        <div class="flex" [class.justify-end]="msg.role === 'user'">
+          <div class="max-w-[85%] sm:max-w-[75%]" [class.mr-8]="msg.role === 'model'" [class.ml-8]="msg.role === 'user'">
+            <div class="flex flex-col gap-1" [class.items-end]="msg.role === 'user'">
+              
+              <div class="p-4 rounded-3xl relative"
+                   [class.input-pill]="msg.role === 'model'"
+                   [class.bg-[var(--color-ink)]]="msg.role === 'user'"
+                   [class.text-white]="msg.role === 'user'"
+                   [class.rounded-tl-sm]="msg.role === 'model'"
+                   [class.rounded-tr-sm]="msg.role === 'user'">
+                <div class="prose max-w-none"
+                     [class.text-white]="msg.role === 'user'"
+                     [class.prose-invert]="msg.role === 'user'"
+                     [innerHTML]="parseMarkdown(msg.content)">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (chatService.isLoading()) {
+        <div class="flex justify-start">
+          <div class="flex items-end gap-2">
+            <div class="input-pill p-4 px-6 flex items-center gap-2 h-12 rounded-3xl rounded-tl-sm">
+              <div class="w-2 h-2 rounded-full bg-[var(--color-muted)] animate-bounce" style="animation-delay: 0ms;"></div>
+              <div class="w-2 h-2 rounded-full bg-[var(--color-muted)] animate-bounce" style="animation-delay: 150ms;"></div>
+              <div class="w-2 h-2 rounded-full bg-[var(--color-muted)] animate-bounce" style="animation-delay: 300ms;"></div>
+            </div>
+          </div>
+        </div>
+      }
+      
+      @if (chatService.messages().length === 0) {
+        <div class="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto opacity-70">
+          <mat-icon class="text-6xl text-[var(--color-olive)] mb-4 scale-150">forum</mat-icon>
+          <h2 class="text-2xl font-serif text-[var(--color-ink)] mb-2" style="font-family: var(--font-serif); font-weight: 700;">Hey there!</h2>
+          <p class="text-[var(--color-muted)]">I'm Claude, your AI best friend. Tell me about your day, ask me a question, or let's learn something new together. I'll get to know you better the more we chat!</p>
+        </div>
+      }
+    </div>
+
+    <!-- Input Area -->
+    <div class="w-full mt-4">
+      <form [formGroup]="chatForm" (ngSubmit)="onSubmit()" class="flex gap-2">
+        <div class="flex-1 input-pill flex items-center px-6 py-2">
+          <input 
+            type="text" 
+            formControlName="message" 
+            placeholder="Type a message..."
+            class="flex-1 bg-transparent border-none outline-none text-[var(--color-ink)] py-2 text-lg"
+            autocomplete="off"
+          >
+        </div>
+        <button type="submit" class="btn-olive !p-3 !rounded-full aspect-square flex items-center justify-center" [disabled]="!chatForm.value.message?.trim() || chatService.isLoading()">
+          <mat-icon>send</mat-icon>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Sidebar: User Persona Algorithm -->
+  <aside 
+    class="w-80 h-full bg-[var(--color-warm-card)] border-l border-black/5 shadow-soft p-6 flex-col gap-6"
+    [class.hidden]="!showSidebar()"
+    [class.flex]="showSidebar()"
+    [class.md:flex]="true"
+    [class.absolute]="true"
+    [class.right-0]="true"
+    [class.z-20]="true"
+    [class.md:relative]="true"
+  >
+    <div class="flex items-center justify-between border-b border-black/5 pb-4">
+      <h2 class="text-xl text-[var(--color-ink)]" style="font-family: var(--font-serif); font-weight: 700;">User Algorithm</h2>
+      <button class="md:hidden text-[var(--color-muted)]" (click)="toggleSidebar()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    @if (chatService.userProfile(); as profile) {
+      <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-6 pb-8 pt-2">
+        
+        <!-- Communication Style -->
+        <div>
+          <p class="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider mb-2">Communication Style</p>
+          <div class="bg-[var(--color-warm-bg)] rounded-xl p-3 text-sm text-[var(--color-ink)] leading-relaxed shadow-inner">
+            {{ profile.communicationStyle }}
+          </div>
+        </div>
+
+        <!-- Learning Style -->
+        <div>
+          <p class="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider mb-2">Learning Style</p>
+          <div class="bg-[var(--color-warm-bg)] rounded-xl p-3 text-sm text-[var(--color-ink)] leading-relaxed shadow-inner">
+            {{ profile.learningStyle }}
+          </div>
+        </div>
+
+        <!-- Graph Memory -->
+        <div>
+          <p class="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>Knowledge Graph</span>
+            <mat-icon class="text-sm">hub</mat-icon>
+          </p>
+          <div class="space-y-3">
+            @for (node of profile.graphMemory?.nodes || []; track node.id) {
+              <div class="bg-[var(--color-warm-bg)] rounded-xl p-3 shadow-inner border border-black/5">
+                <div class="flex justify-between items-start mb-1">
+                  <span class="font-medium text-sm text-[var(--color-ink)]">{{ node.name }}</span>
+                  <span class="text-[0.65rem] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide"
+                    [class.bg-emerald-100]="node.understandingLevel === 'expert'"
+                    [class.text-emerald-700]="node.understandingLevel === 'expert'"
+                    [class.bg-blue-100]="node.understandingLevel === 'advanced'"
+                    [class.text-blue-700]="node.understandingLevel === 'advanced'"
+                    [class.bg-amber-100]="node.understandingLevel === 'intermediate'"
+                    [class.text-amber-700]="node.understandingLevel === 'intermediate'"
+                    [class.bg-slate-100]="node.understandingLevel === 'beginner'"
+                    [class.text-slate-700]="node.understandingLevel === 'beginner'"
+                  >
+                    {{ node.understandingLevel }}
+                  </span>
+                </div>
+                <p class="text-xs text-[var(--color-muted)] mb-2">{{ node.context }}</p>
+                
+                <!-- Edges from this node -->
+                @let nodeEdges = getEdgesForNode(node.id, profile.graphMemory?.edges || []);
+                @if (nodeEdges.length > 0) {
+                  <div class="flex flex-col gap-1 mt-2 pt-2 border-t border-black/5">
+                    @for (edge of nodeEdges; track edge.targetId) {
+                      <div class="text-[0.7rem] text-[var(--color-olive)] flex items-center gap-1">
+                        <mat-icon class="text-[0.9rem] w-[0.9rem] h-[0.9rem] leading-none">arrow_forward</mat-icon>
+                        <span class="italic">{{ edge.relationship }}</span>
+                        <span class="font-medium truncate max-w-[80px]" [title]="getNodeName(edge.targetId, profile.graphMemory?.nodes || [])">
+                          {{ getNodeName(edge.targetId, profile.graphMemory?.nodes || []) }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+            @if (!profile.graphMemory?.nodes?.length) {
+              <p class="text-sm text-[var(--color-muted)] italic">No concepts mapped yet.</p>
+            }
+          </div>
+        </div>
+
+        <!-- Friendship Dynamic -->
+        <div>
+          <p class="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider mb-2">Friendship Dynamic</p>
+          <div class="bg-[var(--color-warm-bg)] rounded-xl p-3 text-sm text-[var(--color-ink)] leading-relaxed italic border-l-2 border-[var(--color-olive)]">
+            "{{ profile.friendshipDynamic }}"
+          </div>
+        </div>
+        
+      </div>
+    } @else {
+      <div class="flex-1 flex flex-col items-center justify-center text-center opacity-60">
+        <mat-icon class="text-4xl text-[var(--color-muted)] mb-2 mix-blend-multiply opacity-50">fingerprint</mat-icon>
+        <p class="text-sm">Algorithm calibrating.<br>Chat with me to build your profile.</p>
+      </div>
+    }
+  </aside>
+  
+  @if (showSidebar()) {
+    <div class="md:hidden fixed inset-0 bg-black/20 z-10" role="button" tabindex="0" (click)="toggleSidebar()" (keydown.enter)="toggleSidebar()"></div>
+  }
+</main>
